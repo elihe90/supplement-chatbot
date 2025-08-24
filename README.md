@@ -48,7 +48,7 @@ An API key from OpenAI and access to the Avala AI proxy
 Clone the repository:
 Start by cloning the project from its GitHub repository to your local machine.
 
-git clone https://github.com/YourUsername/supplement-chatbot.git
+#### git clone https://github.com/YourUsername/supplement-chatbot.git
 
 Navigate to the project folder:
 
@@ -58,11 +58,11 @@ cd supplement-chatbot
 Create and activate a virtual environment:
 
 Set up a virtual environment to manage project dependencies and activate it.
-# python -m venv .venv
-# source .venv/bin/activate
+#### python -m venv .venv
+#### source .venv/bin/activate
 Install the required packages:
 Install all the necessary Python libraries listed in the requirements.txt file.
-# pip install -r requirements.txt
+####  pip install -r requirements.txt
 Create and configure the .env file:
 Create a .env file and add your credentials. Make sure to replace the placeholder values with your actual keys and URLs.
 
@@ -71,9 +71,9 @@ AVALAI_BASE_URL="https://proxy.avala.ai/v1"
 REDIS_URL="redis://localhost:6379/0"
 Run the Redis database with Docker:
 Use Docker to start a Redis container, which your chatbot will use for conversation memory.
-# docker run --name my-redis -p 6379:6379 -d redis
+#### docker run --name my-redis -p 6379:6379 -d redis
 Start the backend server:
 Launch the FastAPI server. This command will also automatically build the vector database from your products_1.json file.
-# uvicorn main:app --reload
+#### uvicorn main:app --reload
 Open the frontend:
-# Author
+###  Author
