@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>همیار هوش - فروشگاه مکمل</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        #chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-window::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #chat-window::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        #chat-window::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .user-message {
+            background-color: #DCF8C6;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color: #FFFFFF;
+            align-self: flex-start;
+            border: 1px solid #e5e7eb;
+        }
+        .bot-message p, .bot-message ul, .bot-message li {
+            margin-bottom: 0.5rem;
+        }
+        .bot-message a {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-2xl h-full sm:h-[90vh] flex flex-col bg-white rounded-lg shadow-xl">
+        <!-- Header -->
+        <div class="bg-emerald-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+            <h1 class="text-xl font-bold">همیار هوش فروشگاه سفیر ثروت</h1>
+            <div id="status-indicator" class="w-3 h-3 bg-green-400 rounded-full"></div>
+        </div>
+
+        <!-- Chat Window -->
+        <div id="chat-window" class="flex-1 p-6 overflow-y-auto">
+             <div class="space-y-4 flex flex-col" id="message-container">
+                <!-- Initial Bot Message -->
+                <div class="flex">
+                    <div class="bot-message p-3 rounded-lg max-w-lg">
+                        <p>سلام! من همیار هوش شما هستم. چطور می‌تونم در انتخاب مکمل به شما کمک کنم؟</p>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                <input type="text" id="chat-input" placeholder="سوال خود را بپرسید..." class="flex-1 w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500" autocomplete="off">
+                <button id="send-button" class="bg-emerald-600 text-white p-2 rounded-full hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const messageContainer = document.getElementById('message-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const statusIndicator = document.getElementById('status-indicator');
+
+        const CHAT_API_URL = 'http://127.0.0.1:8000/chat';
+
+        let sessionId = localStorage.getItem('chatbot_session_id');
+        if (!sessionId) {
+            sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+            localStorage.setItem('chatbot_session_id', sessionId);
+        }
+
+        const scrollToBottom = () => {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        };
+
+        const addMessage = (message, sender) => {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('flex', sender === 'user' ? 'justify-end' : 'justify-start');
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('p-3', 'rounded-lg', 'max-w-lg', sender === 'user' ? 'user-message' : 'bot-message');
+            
+            if (sender === 'bot') {
+                 messageElement.innerHTML = marked.parse(message);
+            } else {
+                messageElement.textContent = message;
+            }
+           
+            messageWrapper.appendChild(messageElement);
+            messageContainer.appendChild(messageWrapper); 
+            scrollToBottom();
+        };
+
+        const showTypingIndicator = () => {
+            const typingElement = document.createElement('div');
+            typingElement.id = 'typing-indicator';
+            typingElement.classList.add('flex', 'justify-start');
+            typingElement.innerHTML = `<div class="bot-message p-3 rounded-lg max-w-lg"><div class="flex items-center space-x-2 rtl:space-x-reverse"><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div></div></div>`;
+            messageContainer.appendChild(typingElement);
+            scrollToBottom();
+        };
+
+        const removeTypingIndicator = () => {
+            const typingElement = document.getElementById('typing-indicator');
+            if (typingElement) {
+                typingElement.remove();
+            }
+        };
+
+        const sendMessage = async () => {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            chatInput.value = '';
+            sendButton.disabled = true;
+            showTypingIndicator();
+            statusIndicator.classList.add('animate-pulse');
+
+            // --- DEBUGGING LINE ADDED ---
+            console.log(`Sending request to: ${CHAT_API_URL} with session_id: ${sessionId}`);
+            // ---
+
+            try {
+                const response = await fetch(CHAT_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    }),
+                });
+
+                removeTypingIndicator();
+
+                if (!response.ok) {
+                    // Log the detailed error from the server if available
+                    const errorData = await response.text();
+                    console.error('Server responded with an error:', response.status, errorData);
+                    throw new Error(`Server error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                removeTypingIndicator();
+                addMessage('متاسفانه مشکلی در ارتباط با سرور پیش آمد. لطفا دوباره تلاش کنید.', 'bot');
+            } finally {
+                sendButton.disabled = false;
+                statusIndicator.classList.remove('animate-pulse');
+                chatInput.focus();
+            }
+        };
+
+        sendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        scrollToBottom();
+
+    </script>
+</body>
+</html>
