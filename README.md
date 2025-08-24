@@ -64,12 +64,16 @@ Install the required packages:
 Install all the necessary Python libraries listed in the requirements.txt file.
 ####  pip install -r requirements.txt
 Create and configure the .env file:
-Create a .env file and add your credentials. Make sure to replace the placeholder values with your actual keys and URLs.
+Create a .env file and add your credentials.
 
 OPENAI_API_KEY="your_openai_api_key_here"
+
 AVALAI_BASE_URL="https://proxy.avala.ai/v1"
+
 REDIS_URL="redis://localhost:6379/0"
+
 Run the Redis database with Docker:
+
 Use Docker to start a Redis container, which your chatbot will use for conversation memory.
 #### docker run --name my-redis -p 6379:6379 -d redis
 Start the backend server:
@@ -77,3 +81,4 @@ Launch the FastAPI server. This command will also automatically build the vector
 #### uvicorn main:app --reload
 Open the frontend:
 ###  Author
+
